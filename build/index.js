@@ -99,7 +99,12 @@ class YamahaAVR {
     this.volumeMax = 50; // +5.0dB
     this.volumeStep = 5; // 0.5dB
 
-    this.yamaha.getSystemConfig().then(sc => log(sc));
+    this.yamaha.getSystemConfig().then(info => {
+      const config = info.YAMAHA_AV.System[0].Config[0];
+      log(config.Model_Name[0]);
+      log(config.System_ID[0]);
+      log(config.Version[0]);
+    });
 
     [this.infoService, this.speakerService, this.switchService] = this.createServices();
   }
