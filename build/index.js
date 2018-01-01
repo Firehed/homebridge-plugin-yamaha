@@ -50,29 +50,40 @@ class YamahaAVR {
     this.getMute = cb => this.yamaha.getBasicInfo().done(info => info.isMuted().then(muted => cb(null, muted)));
 
     this.setMute = (muted, cb) => {
-      this.log('setmute ' + muted);
-      cb();
+      this.log.debug('Set mute to ' + muted);
+      const res = muted ? this.yamaha.muteOn(this.zone) : this.yamaha.muteOff(this.zone);
+      res.then(_ => cb());
     };
 
     this.getVolume = cb => {
-      this.log('getvolume');
-      cb(40);
+      this.yamaha.getVolume(this.zone).then(dB => {
+        this.log('raw volume: ' + dB);
+        const fromMin = db - this.volumeMin;
+        const percent = fromMin / (this.volumeMax - this.volumeMin);
+        this.log(percent + '%');
+        cb(null, percent);
+      });
     };
 
     this.setVolume = (vol, cb) => {
-      this.log('setVolume ' + vol);
-      cb();
+      this.log('set volume to ' + vol);
+      const relative = vol * (this.volumeMax - this.volumeMin);
+      const target = relative + this.volumeMin;
+      // todo: round to nearest this.volumeStep
+      this.log('absolute target ' + target);
+      this.yamaha.setVolumeTo(target, this.zone).then(_ => cb());
     };
 
-    this.getPower = cb => this.yamaha.isOn().then(isOn => cb(null, isOn));
+    this.getPower = cb => this.yamaha.isOn(this.zone).then(isOn => cb(null, isOn));
 
     this.setPower = (on, cb) => {
-      const res = on ? this.yamaha.powerOn() : this.yamaha.powerOff();
+      this.log.debug('Set power to ' + on);
+      const res = on ? this.yamaha.powerOn(this.zone) : this.yamaha.powerOff(this.zone);
       res.then(_ => cb());
     };
 
     if (!config) {
-      log('Ignoring HDMI switch - no config');
+      log('Ignoring receiver - no config');
       return;
     }
     this.log = log;
@@ -81,9 +92,17 @@ class YamahaAVR {
 
     this.yamaha = new Yamaha(host);
 
-    this.yamaha.getAvailableZones().then(z => log(z));
+    this.zone = config.zone || 1;
+
+    // Educated guesses from raw API data
+    this.volumeMin = -800; // -80.0dB
+    this.volumeMax = 50; // +5.0dB
+    this.volumeStep = 5; // 0.5dB
+
+    this.yamaha.getSystemConfig().then(sc => log(sc));
 
     [this.infoService, this.speakerService, this.switchService] = this.createServices();
   }
 
+  // Best guess for now, this doesn't work in Home app (yet?)
 }
