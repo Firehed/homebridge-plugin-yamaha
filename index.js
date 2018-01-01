@@ -101,8 +101,8 @@ class YamahaAVR {
     .then(isOn => cb(null, isOn))
 
   setPower = (on, cb) => {
-    const powerMethod = on ? this.yamaha.powerOn : this.yamaha.powerOff;
-    powerMethod().then(_ => cb());
+    const res = on ? this.yamaha.powerOn() : this.yamaha.powerOff();
+    res.then(_ => cb());
   }
 
 }

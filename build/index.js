@@ -67,8 +67,8 @@ class YamahaAVR {
     this.getPower = cb => this.yamaha.isOn().then(isOn => cb(null, isOn));
 
     this.setPower = (on, cb) => {
-      const powerMethod = on ? this.yamaha.powerOn : this.yamaha.powerOff;
-      powerMethod().then(_ => cb());
+      const res = on ? this.yamaha.powerOn() : this.yamaha.powerOff();
+      res.then(_ => cb());
     };
 
     if (!config) {
