@@ -35,6 +35,8 @@ class YamahaAVR {
 
     this.yamaha = new Yamaha(host);
 
+    this.yamaha.getAvailableZones().then(z => log(z));
+
     [this.infoService, this.speakerService, this.switchService] = this.createServices();
   }
  
@@ -69,8 +71,9 @@ class YamahaAVR {
   getServices = () => {
     return [
       this.infoService,
-      this.speakerService,
-//      this.switchService,
+//      this.speakerService, // Not supported in home app yet, so just leave it
+                             // unimplemented for now
+      this.switchService,
     ]
   }
 
@@ -93,13 +96,13 @@ class YamahaAVR {
     cb();
   }
 
-  getPower = (cb) => {
-    cb(null, true);
-  }
+  getPower = (cb) => this.yamaha
+    .isOn()
+    .then(isOn => cb(null, isOn))
 
   setPower = (on, cb) => {
-    this.log('setpower ' + on);
-    cb();
+    powerMethod = on ? this.yamaha.powerOn : this.yamaha.powerOff;
+    powerMethod().then(_ => cb());
   }
 
 }

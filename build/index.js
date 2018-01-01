@@ -41,7 +41,10 @@ class YamahaAVR {
     };
 
     this.getServices = () => {
-      return [this.infoService, this.speakerService];
+      return [this.infoService,
+      //      this.speakerService, // Not supported in home app yet, so just leave it
+      // unimplemented for now
+      this.switchService];
     };
 
     this.getMute = cb => this.yamaha.getBasicInfo().done(info => info.isMuted().then(muted => cb(null, muted)));
@@ -61,13 +64,11 @@ class YamahaAVR {
       cb();
     };
 
-    this.getPower = cb => {
-      cb(null, true);
-    };
+    this.getPower = cb => this.yamaha.isOn().then(isOn => cb(null, isOn));
 
     this.setPower = (on, cb) => {
-      this.log('setpower ' + on);
-      cb();
+      powerMethod = on ? this.yamaha.powerOn : this.yamaha.powerOff;
+      powerMethod().then(_ => cb());
     };
 
     if (!config) {
@@ -79,6 +80,8 @@ class YamahaAVR {
     const { host } = config;
 
     this.yamaha = new Yamaha(host);
+
+    this.yamaha.getAvailableZones().then(z => log(z));
 
     [this.infoService, this.speakerService, this.switchService] = this.createServices();
   }
