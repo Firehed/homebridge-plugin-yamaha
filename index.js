@@ -35,6 +35,13 @@ class YamahaAVR {
 
     this.yamaha = new Yamaha(host);
 
+    this.zone = config.zone || 1;
+
+    // Educated guesses from raw API data
+    this.volumeMin = -800; // -80.0dB
+    this.volumeMax = 50; // +5.0dB
+    this.volumeStep = 5; // 0.5dB
+
     this.yamaha.getAvailableZones().then(z => log(z));
 
     [this.infoService, this.speakerService, this.switchService] = this.createServices();
@@ -82,26 +89,44 @@ class YamahaAVR {
     .done(info => info.isMuted().then(muted => cb(null, muted)));
 
   setMute = (muted, cb) => {
-    this.log('setmute ' + muted);
-    cb();
+    this.log.debug('Set mute to ' + muted);
+    const res = muted
+      ? this.yamaha.muteOn(this.zone)
+      : this.yamaha.muteOff(this.zone);
+    res.then(_ => cb());
   }
 
+  // Best guess for now, this doesn't work in Home app (yet?)
   getVolume = (cb) => {
-    this.log('getvolume');
-    cb(40);
+    this.yamaha.getVolume(this.zone)
+      .then(dB => {
+        this.log('raw volume: ' + dB);
+        const fromMin = db - this.volumeMin;
+        const percent = fromMin / (this.volumeMax - this.volumeMin);
+        this.log(percent + '%');
+        cb(null, percent);
+      });
   }
 
   setVolume = (vol, cb) => {
-    this.log('setVolume ' + vol);
-    cb();
+    this.log('set volume to ' + vol);
+    const relative = vol * (this.volumeMax - this.volumeMin);
+    const target = relative + this.volumeMin;
+    // todo: round to nearest this.volumeStep
+    this.log('absolute target ' + target);
+    this.yamaha.setVolumeTo(target, this.zone)
+      .then(_ => cb());
   }
 
   getPower = (cb) => this.yamaha
-    .isOn()
+    .isOn(this.zone)
     .then(isOn => cb(null, isOn))
 
   setPower = (on, cb) => {
-    const res = on ? this.yamaha.powerOn() : this.yamaha.powerOff();
+    this.log.debug('Set power to ' + on);
+    const res = on
+      ? this.yamaha.powerOn(this.zone)
+      : this.yamaha.powerOff(this.zone);
     res.then(_ => cb());
   }
 
