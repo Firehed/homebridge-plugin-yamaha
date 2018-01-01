@@ -70,7 +70,7 @@ class YamahaAVR {
     return [
       this.infoService,
       this.speakerService,
-      this.switchService,
+//      this.switchService,
     ]
   }
 

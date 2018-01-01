@@ -41,7 +41,7 @@ class YamahaAVR {
     };
 
     this.getServices = () => {
-      return [this.infoService, this.speakerService, this.switchService];
+      return [this.infoService, this.speakerService];
     };
 
     this.getMute = cb => this.yamaha.getBasicInfo().done(info => info.isMuted().then(muted => cb(null, muted)));
