@@ -26,7 +26,7 @@ class YamahaAVR {
   // These values are provided via Homebridge
   constructor(log, config, api) {
     if (!config) {
-      log('Ignoring HDMI switch - no config');
+      log('Ignoring receiver - no config');
       return;
     }
     this.log = log;
@@ -42,7 +42,7 @@ class YamahaAVR {
     this.volumeMax = 50; // +5.0dB
     this.volumeStep = 5; // 0.5dB
 
-    this.yamaha.getAvailableZones().then(z => log(z));
+    this.yamaha.getSystemConfig().then(sc => log(sc));
 
     [this.infoService, this.speakerService, this.switchService] = this.createServices();
   }
